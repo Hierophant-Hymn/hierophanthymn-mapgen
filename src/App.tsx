@@ -27,6 +27,8 @@ function App() {
   );
 
   const [territoryCount, setTerritoryCount] = useState(20);
+  const [seedInput, setSeedInput] = useState<string>('');
+  const [useSeed, setUseSeed] = useState(false);
 
   // Terrain colors for legend
   const terrainColors: Record<TerrainType, string> = {
@@ -49,16 +51,28 @@ function App() {
   }, [territories]);
 
   /**
-   * Regenerate the map with a new seed
+   * Regenerate the map with a new seed or custom seed
    */
   const handleRegenerate = useCallback(() => {
+    let seed: number;
+    if (useSeed && seedInput) {
+      seed = parseInt(seedInput, 10);
+      if (isNaN(seed)) {
+        alert('Please enter a valid number for the seed');
+        return;
+      }
+    } else {
+      seed = Date.now();
+      setSeedInput(seed.toString());
+    }
+
     const newConfig = {
       ...config,
       territoryCount,
-      seed: Date.now()
+      seed
     };
     setTerritories(generateMap(newConfig));
-  }, [config, territoryCount]);
+  }, [config, territoryCount, useSeed, seedInput]);
 
   /**
    * Export map data as JSON
@@ -117,6 +131,33 @@ function App() {
             onChange={(e) => setTerritoryCount(Number(e.target.value))}
             className="slider"
           />
+        </div>
+
+        <div className="control-group">
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="checkbox"
+              checked={useSeed}
+              onChange={(e) => setUseSeed(e.target.checked)}
+            />
+            Use Custom Seed
+          </label>
+          {useSeed && (
+            <input
+              type="text"
+              value={seedInput}
+              onChange={(e) => setSeedInput(e.target.value)}
+              placeholder="Enter seed number"
+              style={{
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '2px solid #ddd',
+                fontSize: '14px',
+                width: '100%',
+                marginTop: '8px'
+              }}
+            />
+          )}
         </div>
 
         <div className="button-group">
