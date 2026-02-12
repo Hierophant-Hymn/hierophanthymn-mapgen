@@ -207,14 +207,17 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   background: #f8f9fa;
   border-radius: 6px;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  border: 1px solid transparent;
 }
 
 .territory-item:hover {
   background: #e9ecef;
+  border-color: #2a5298;
+  transform: translateX(2px);
 }
 
 .territory-color {
@@ -256,4 +259,45 @@ body {
 
 .territory-list::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Terrain legend */
+.terrain-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.terrain-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: white;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 2px solid #ddd;
+  transition: all 0.2s;
+}
+
+.terrain-badge:hover {
+  border-color: #2a5298;
+  transform: scale(1.05);
+}
+
+.terrain-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.terrain-count {
+  margin-left: 4px;
+  color: #666;
+  font-weight: 400;
 }

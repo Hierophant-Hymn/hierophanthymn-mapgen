@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { MapCanvas } from './components/MapCanvas';
 import { generateMap } from './utils/mapGenerator';
-import { Territory, MapConfig } from './types/Territory';
+import { Territory, MapConfig, TerrainType } from './types/Territory';
 import './App.css';
 
 /**
@@ -27,6 +27,26 @@ function App() {
   );
 
   const [territoryCount, setTerritoryCount] = useState(20);
+
+  // Terrain colors for legend
+  const terrainColors: Record<TerrainType, string> = {
+    [TerrainType.PLAINS]: '#8bc34a',
+    [TerrainType.FOREST]: '#4caf50',
+    [TerrainType.MOUNTAINS]: '#9e9e9e',
+    [TerrainType.DESERT]: '#ffc107',
+    [TerrainType.HILLS]: '#795548',
+    [TerrainType.COASTAL]: '#03a9f4'
+  };
+
+  // Calculate terrain distribution
+  const terrainDistribution = useMemo(() => {
+    const distribution = new Map<TerrainType, number>();
+    territories.forEach(t => {
+      const count = distribution.get(t.metadata.terrain) || 0;
+      distribution.set(t.metadata.terrain, count + 1);
+    });
+    return distribution;
+  }, [territories]);
 
   /**
    * Regenerate the map with a new seed
@@ -135,9 +155,39 @@ function App() {
             <span className="stat-value">{territories.length}</span>
           </div>
           <div className="stat">
+            <span className="stat-label">Total Population:</span>
+            <span className="stat-value">
+              {territories.reduce((sum, t) => sum + t.metadata.population, 0).toLocaleString()}
+            </span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Avg Development:</span>
+            <span className="stat-value">
+              {Math.round(territories.reduce((sum, t) => sum + t.metadata.development, 0) / territories.length)}%
+            </span>
+          </div>
+          <div className="stat">
             <span className="stat-label">Map Size:</span>
             <span className="stat-value">{config.width} × {config.height}</span>
           </div>
+        </div>
+
+        <h3>Terrain Distribution</h3>
+        <div className="terrain-legend">
+          {Object.entries(TerrainType).map(([key, value]) => {
+            const count = terrainDistribution.get(value) || 0;
+            if (count === 0) return null;
+            return (
+              <div key={key} className="terrain-badge">
+                <div
+                  className="terrain-icon"
+                  style={{ backgroundColor: terrainColors[value] }}
+                />
+                <span style={{ textTransform: 'capitalize' }}>{value}</span>
+                <span className="terrain-count">({count})</span>
+              </div>
+            );
+          })}
         </div>
 
         <h3>Territory List</h3>
@@ -148,7 +198,12 @@ function App() {
                 className="territory-color"
                 style={{ backgroundColor: territory.color }}
               />
-              <span className="territory-name">{territory.name}</span>
+              <div style={{ flex: 1 }}>
+                <div className="territory-name">{territory.name}</div>
+                <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '2px' }}>
+                  {territory.metadata.terrain} • Pop: {(territory.metadata.population / 1000).toFixed(1)}k
+                </div>
+              </div>
             </div>
           ))}
         </div>
