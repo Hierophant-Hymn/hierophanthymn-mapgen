@@ -3,6 +3,7 @@ import { Territory, MapConfig } from '../types/Territory';
 import { generateTerritoryNames } from './nameGenerator';
 import { generateTerrainColor } from './colorGenerator';
 import { generateMetadata, calculateArea } from './metadataGenerator';
+import { SeededRandom } from './seededRandom';
 
 /**
  * Core map generator using Voronoi diagrams
@@ -13,22 +14,6 @@ import { generateMetadata, calculateArea } from './metadataGenerator';
  * 3. Clip polygons to map bounds
  * 4. Generate names and colors for each territory
  */
-
-/**
- * Seeded random number generator for reproducible maps
- */
-class SeededRandom {
-  private seed: number;
-
-  constructor(seed: number) {
-    this.seed = seed;
-  }
-
-  next(): number {
-    this.seed = (this.seed * 9301 + 49297) % 233280;
-    return this.seed / 233280;
-  }
-}
 
 /**
  * Generate random points with Lloyd's relaxation for better distribution
