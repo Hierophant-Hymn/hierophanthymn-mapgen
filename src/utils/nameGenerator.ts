@@ -3,6 +3,8 @@
  * Creates realistic-sounding medieval names using syllable combinations
  */
 
+import { SeededRandom } from './seededRandom';
+
 const prefixes = [
   'Ald', 'Bal', 'Cor', 'Dun', 'Eld', 'Fal', 'Gar', 'Hil', 'Kal', 'Lor',
   'Mor', 'Nor', 'Ost', 'Pel', 'Quen', 'Rav', 'Sil', 'Thal', 'Val', 'Wel',
@@ -19,22 +21,6 @@ const suffixes = [
   'ia', 'or', 'en', 'ar', 'on', 'us', 'um', 'land', 'mark', 'reich',
   'dom', 'hold', 'stead', 'ton', 'field', 'mere', 'moor', 'crest', 'peak', 'watch'
 ];
-
-/**
- * Seeded random number generator for reproducible names
- */
-class SeededRandom {
-  private seed: number;
-
-  constructor(seed: number) {
-    this.seed = seed;
-  }
-
-  next(): number {
-    this.seed = (this.seed * 9301 + 49297) % 233280;
-    return this.seed / 233280;
-  }
-}
 
 /**
  * Generate a medieval-sounding territory name
