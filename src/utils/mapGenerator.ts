@@ -1,7 +1,8 @@
 import { Delaunay } from 'd3-delaunay';
 import { Territory, MapConfig } from '../types/Territory';
 import { generateTerritoryNames } from './nameGenerator';
-import { generateColorPalette } from './colorGenerator';
+import { generateTerrainColor } from './colorGenerator';
+import { generateMetadata, calculateArea } from './metadataGenerator';
 
 /**
  * Core map generator using Voronoi diagrams
@@ -96,9 +97,8 @@ export function generateMap(config: MapConfig): Territory[] {
   const delaunay = Delaunay.from(points);
   const voronoi = delaunay.voronoi([0, 0, width, height]);
 
-  // Generate names and colors
+  // Generate names
   const names = generateTerritoryNames(territoryCount, seed);
-  const colors = generateColorPalette(territoryCount, seed);
 
   // Build territory objects
   const territories: Territory[] = [];
@@ -110,13 +110,31 @@ export function generateMap(config: MapConfig): Territory[] {
       // Remove duplicate closing point if present
       const borderPoints: [number, number][] = cell.slice(0, -1);
 
+      // Calculate territory area
+      const area = calculateArea(borderPoints);
+
+      // Generate metadata based on position and area
+      const metadata = generateMetadata(
+        points[i][0],
+        points[i][1],
+        width,
+        height,
+        area,
+        seed + i
+      );
+
+      // Generate terrain-aware color
+      const color = generateTerrainColor(metadata.terrain, i, seed);
+
       territories.push({
         id: `territory-${i}`,
         name: names[i],
-        color: colors[i],
+        color,
         centerX: points[i][0],
         centerY: points[i][1],
-        borderPoints
+        borderPoints,
+        area,
+        metadata
       });
     }
   }
