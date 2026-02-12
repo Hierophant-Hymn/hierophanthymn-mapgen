@@ -40,16 +40,19 @@ function generateRelaxedPoints(
   width: number,
   height: number,
   seed: number,
-  relaxationIterations: number = 2
+  relaxationIterations: number = 3
 ): [number, number][] {
   const rng = new SeededRandom(seed);
+
+  // Add padding to avoid territories at extreme edges
+  const padding = Math.min(width, height) * 0.02;
 
   // Generate initial random points
   let points: [number, number][] = [];
   for (let i = 0; i < count; i++) {
     points.push([
-      rng.next() * width,
-      rng.next() * height
+      padding + rng.next() * (width - 2 * padding),
+      padding + rng.next() * (height - 2 * padding)
     ]);
   }
 
