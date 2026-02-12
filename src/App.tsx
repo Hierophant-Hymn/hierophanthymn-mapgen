@@ -6,6 +6,7 @@ import './App.css';
 
 /**
  * Main application component
+ * @component
  *
  * Features:
  * - Territory count configuration
