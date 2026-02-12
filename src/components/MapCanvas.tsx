@@ -148,24 +148,50 @@ export function MapCanvas({ territories, width, height }: MapCanvasProps) {
             position: 'absolute',
             left: mousePos.x + 10,
             top: mousePos.y + 10,
-            background: 'rgba(0, 0, 0, 0.9)',
+            background: 'rgba(0, 0, 0, 0.95)',
             color: '#fff',
-            padding: '12px 16px',
-            borderRadius: '6px',
+            padding: '14px 18px',
+            borderRadius: '8px',
             pointerEvents: 'none',
-            fontSize: '14px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
-            zIndex: 1000
+            fontSize: '13px',
+            boxShadow: '0 6px 12px rgba(0, 0, 0, 0.4)',
+            zIndex: 1000,
+            minWidth: '220px',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
           }}
         >
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '16px', borderBottom: '1px solid rgba(255, 255, 255, 0.2)', paddingBottom: '6px' }}>
             {hoveredTerritory.name}
           </div>
-          <div style={{ fontSize: '12px', opacity: 0.8 }}>
-            ID: {hoveredTerritory.id}
+
+          <div style={{ marginBottom: '8px' }}>
+            <div style={{ fontSize: '11px', opacity: 0.7, marginBottom: '4px' }}>DEMOGRAPHICS</div>
+            <div style={{ fontSize: '12px', marginLeft: '8px' }}>
+              <div>Population: <span style={{ color: '#4fc3f7' }}>{hoveredTerritory.metadata.population.toLocaleString()}</span></div>
+              <div>Culture: <span style={{ color: '#81c784' }}>{hoveredTerritory.metadata.culture}</span></div>
+              <div>Development: <span style={{ color: '#ffb74d' }}>{hoveredTerritory.metadata.development}%</span></div>
+            </div>
           </div>
-          <div style={{ fontSize: '12px', opacity: 0.8 }}>
-            Center: ({Math.round(hoveredTerritory.centerX)}, {Math.round(hoveredTerritory.centerY)})
+
+          <div style={{ marginBottom: '8px' }}>
+            <div style={{ fontSize: '11px', opacity: 0.7, marginBottom: '4px' }}>TERRAIN</div>
+            <div style={{ fontSize: '12px', marginLeft: '8px', textTransform: 'capitalize' }}>
+              <span style={{ color: '#a5d6a7' }}>{hoveredTerritory.metadata.terrain}</span>
+              {hoveredTerritory.area && (
+                <span style={{ opacity: 0.7, marginLeft: '8px' }}>
+                  ({Math.round(hoveredTerritory.area).toLocaleString()} km²)
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize: '11px', opacity: 0.7, marginBottom: '4px' }}>RESOURCES</div>
+            <div style={{ fontSize: '12px', marginLeft: '8px' }}>
+              <div>Food: <span style={{ color: '#8bc34a' }}>{hoveredTerritory.metadata.resources.food}/100</span></div>
+              <div>Gold: <span style={{ color: '#ffd54f' }}>{hoveredTerritory.metadata.resources.gold}/100</span></div>
+              <div>Military: <span style={{ color: '#ef5350' }}>{hoveredTerritory.metadata.resources.military}/100</span></div>
+            </div>
           </div>
         </div>
       )}
