@@ -21,6 +21,12 @@ export function MapCanvas({ territories, width, height }: MapCanvasProps) {
   const [hoveredTerritory, setHoveredTerritory] = useState<Territory | null>(null);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
 
+  // Pan and zoom state
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPos, setLastPanPos] = useState<{ x: number; y: number } | null>(null);
+
   /**
    * Main rendering function
    * Draws all territories with borders and optional hover highlight
@@ -34,6 +40,11 @@ export function MapCanvas({ territories, width, height }: MapCanvasProps) {
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
+
+    // Apply transformations
+    ctx.save();
+    ctx.translate(pan.x, pan.y);
+    ctx.scale(zoom, zoom);
 
     // Draw each territory
     territories.forEach(territory => {
@@ -77,7 +88,9 @@ export function MapCanvas({ territories, width, height }: MapCanvasProps) {
       ctx.strokeText(territory.name, territory.centerX, territory.centerY);
       ctx.fillText(territory.name, territory.centerX, territory.centerY);
     });
-  }, [territories, width, height, hoveredTerritory]);
+
+    ctx.restore();
+  }, [territories, width, height, hoveredTerritory, pan, zoom]);
 
   /**
    * Point-in-polygon algorithm using ray casting
@@ -101,21 +114,43 @@ export function MapCanvas({ territories, width, height }: MapCanvasProps) {
   };
 
   /**
-   * Handle mouse movement for hover detection
+   * Transform screen coordinates to world coordinates
+   */
+  const screenToWorld = (screenX: number, screenY: number): [number, number] => {
+    return [
+      (screenX - pan.x) / zoom,
+      (screenY - pan.y) / zoom
+    ];
+  };
+
+  /**
+   * Handle mouse movement for hover detection and panning
    */
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
 
-    setMousePos({ x, y });
+    // Handle panning
+    if (isPanning && lastPanPos) {
+      const dx = screenX - lastPanPos.x;
+      const dy = screenY - lastPanPos.y;
+      setPan({ x: pan.x + dx, y: pan.y + dy });
+      setLastPanPos({ x: screenX, y: screenY });
+      return;
+    }
+
+    setMousePos({ x: screenX, y: screenY });
+
+    // Convert to world coordinates for hit detection
+    const [worldX, worldY] = screenToWorld(screenX, screenY);
 
     // Find which territory the mouse is over
     const territory = territories.find(t =>
-      isPointInPolygon([x, y], t.borderPoints)
+      isPointInPolygon([worldX, worldY], t.borderPoints)
     );
 
     setHoveredTerritory(territory || null);
@@ -124,6 +159,53 @@ export function MapCanvas({ territories, width, height }: MapCanvasProps) {
   const handleMouseLeave = () => {
     setHoveredTerritory(null);
     setMousePos(null);
+    setIsPanning(false);
+    setLastPanPos(null);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (e.button === 0) { // Left mouse button
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      setIsPanning(true);
+      setLastPanPos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+    setLastPanPos(null);
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Zoom factor
+    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.5), 5);
+
+    // Adjust pan to zoom towards mouse position
+    const zoomChange = newZoom / zoom;
+    const newPanX = mouseX - (mouseX - pan.x) * zoomChange;
+    const newPanY = mouseY - (mouseY - pan.y) * zoomChange;
+
+    setZoom(newZoom);
+    setPan({ x: newPanX, y: newPanY });
+  };
+
+  const handleReset = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   };
 
   return (
@@ -134,12 +216,76 @@ export function MapCanvas({ territories, width, height }: MapCanvasProps) {
         height={height}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onWheel={handleWheel}
         style={{
           border: '2px solid #333',
-          cursor: hoveredTerritory ? 'pointer' : 'default',
+          cursor: isPanning ? 'grabbing' : hoveredTerritory ? 'pointer' : 'grab',
           display: 'block'
         }}
       />
+
+      {/* Zoom controls */}
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        right: '10px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        background: 'rgba(255, 255, 255, 0.95)',
+        padding: '8px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+      }}>
+        <button
+          onClick={() => setZoom(Math.min(zoom * 1.2, 5))}
+          style={{
+            padding: '6px 12px',
+            border: 'none',
+            background: '#2a5298',
+            color: 'white',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          +
+        </button>
+        <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: '500' }}>
+          {Math.round(zoom * 100)}%
+        </div>
+        <button
+          onClick={() => setZoom(Math.max(zoom * 0.8, 0.5))}
+          style={{
+            padding: '6px 12px',
+            border: 'none',
+            background: '#2a5298',
+            color: 'white',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          −
+        </button>
+        <button
+          onClick={handleReset}
+          style={{
+            padding: '6px 12px',
+            border: 'none',
+            background: '#6c757d',
+            color: 'white',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '10px',
+            fontWeight: '500'
+          }}
+        >
+          Reset
+        </button>
+      </div>
 
       {/* Hover tooltip */}
       {hoveredTerritory && mousePos && (
