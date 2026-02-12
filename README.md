@@ -1,0 +1,3 @@
+# Hierophant Hymn - Territory Generator
+
+Setting up project structure...
